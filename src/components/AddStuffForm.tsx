@@ -5,36 +5,51 @@ import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import swal from 'sweetalert';
-import { redirect } from 'next/navigation';
 import { addStuff } from '@/lib/dbActions';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { AddStuffSchema } from '@/lib/validationSchemas';
 
-const onSubmit = async (data: { name: string; quantity: number; owner: string; condition: string }) => {
-  // console.log(`onSubmit data: ${JSON.stringify(data, null, 2)}`);
-  await addStuff(data);
-  swal('Success', 'Your item has been added', 'success', {
-    timer: 2000,
-  });
+type ConditionType = 'excellent' | 'good' | 'fair' | 'poor';
+type CategoryType = 'Food' | 'Sporting_Goods' | 'Electronics' | 'Other';
+
+type AddStuffFormData = {
+  name: string;
+  quantity: number;
+  condition: ConditionType;
+  category: CategoryType;
+  owner: string;
 };
 
 const AddStuffForm: React.FC = () => {
   const { data: session, status } = useSession();
-  // console.log('AddStuffForm', status, session);
   const currentUser = session?.user?.email || '';
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
+  } = useForm<AddStuffFormData>({
     resolver: yupResolver(AddStuffSchema),
   });
+
+  const onSubmit = async (data: AddStuffFormData) => {
+    const completeData = { ...data, owner: currentUser }; // ✅ Ensure owner is included
+    await addStuff(completeData);
+    swal('Success', 'Your item has been added', 'success', {
+      timer: 1500,
+    }).then(() => {
+      window.location.href = '/list';
+    });
+  };
+
   if (status === 'loading') {
     return <LoadingSpinner />;
   }
+
   if (status === 'unauthenticated') {
-    redirect('/auth/signin');
+    window.location.href = '/auth/signin';
+    return null;
   }
 
   return (
@@ -56,6 +71,7 @@ const AddStuffForm: React.FC = () => {
                   />
                   <div className="invalid-feedback">{errors.name?.message}</div>
                 </Form.Group>
+
                 <Form.Group>
                   <Form.Label>Quantity</Form.Label>
                   <input
@@ -65,9 +81,13 @@ const AddStuffForm: React.FC = () => {
                   />
                   <div className="invalid-feedback">{errors.quantity?.message}</div>
                 </Form.Group>
+
                 <Form.Group>
                   <Form.Label>Condition</Form.Label>
-                  <select {...register('condition')} className={`form-control ${errors.condition ? 'is-invalid' : ''}`}>
+                  <select
+                    {...register('condition')}
+                    className={`form-control ${errors.condition ? 'is-invalid' : ''}`}
+                  >
                     <option value="excellent">Excellent</option>
                     <option value="good">Good</option>
                     <option value="fair">Fair</option>
@@ -75,7 +95,25 @@ const AddStuffForm: React.FC = () => {
                   </select>
                   <div className="invalid-feedback">{errors.condition?.message}</div>
                 </Form.Group>
-                <input type="hidden" {...register('owner')} value={currentUser} />
+
+                <Form.Group>
+                  <Form.Label>Category</Form.Label>
+                  <select
+                    {...register('category')}
+                    className={`form-control ${errors.category ? 'is-invalid' : ''}`}
+                  >
+                    <option value="">Select category</option>
+                    <option value="Food">Food</option>
+                    <option value="Sporting_Goods">Sporting Goods</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <div className="invalid-feedback">{errors.category?.message}</div>
+                </Form.Group>
+
+                {/* Hidden field not needed since owner is manually added */}
+                {/* <input type="hidden" {...register('owner')} value={currentUser} /> */}
+
                 <Form.Group className="form-group">
                   <Row className="pt-3">
                     <Col>
@@ -84,7 +122,12 @@ const AddStuffForm: React.FC = () => {
                       </Button>
                     </Col>
                     <Col>
-                      <Button type="button" onClick={() => reset()} variant="warning" className="float-right">
+                      <Button
+                        type="button"
+                        onClick={() => reset()}
+                        variant="warning"
+                        className="float-right"
+                      >
                         Reset
                       </Button>
                     </Col>

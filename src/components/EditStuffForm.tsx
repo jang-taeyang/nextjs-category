@@ -9,7 +9,6 @@ import { EditStuffSchema } from '@/lib/validationSchemas';
 import { editStuff } from '@/lib/dbActions';
 
 const onSubmit = async (data: Stuff) => {
-  // console.log(`onSubmit data: ${JSON.stringify(data, null, 2)}`);
   await editStuff(data);
   swal('Success', 'Your item has been updated', 'success', {
     timer: 2000,
@@ -24,8 +23,10 @@ const EditStuffForm = ({ stuff }: { stuff: Stuff }) => {
     formState: { errors },
   } = useForm<Stuff>({
     resolver: yupResolver(EditStuffSchema),
+    defaultValues: {
+      ...stuff,
+    },
   });
-  // console.log(stuff);
 
   return (
     <Container className="py-3">
@@ -37,34 +38,34 @@ const EditStuffForm = ({ stuff }: { stuff: Stuff }) => {
           <Card>
             <Card.Body>
               <Form onSubmit={handleSubmit(onSubmit)}>
-                <input type="hidden" {...register('id')} value={stuff.id} />
+                <input type="hidden" {...register('id')} />
+                <input type="hidden" {...register('owner')} />
+
                 <Form.Group>
                   <Form.Label>Name</Form.Label>
                   <input
                     type="text"
                     {...register('name')}
-                    defaultValue={stuff.name}
-                    required
                     className={`form-control ${errors.name ? 'is-invalid' : ''}`}
                   />
                   <div className="invalid-feedback">{errors.name?.message}</div>
                 </Form.Group>
+
                 <Form.Group>
                   <Form.Label>Quantity</Form.Label>
                   <input
                     type="number"
                     {...register('quantity')}
-                    defaultValue={stuff.quantity}
                     className={`form-control ${errors.quantity ? 'is-invalid' : ''}`}
                   />
                   <div className="invalid-feedback">{errors.quantity?.message}</div>
                 </Form.Group>
+
                 <Form.Group>
                   <Form.Label>Condition</Form.Label>
                   <select
                     {...register('condition')}
                     className={`form-control ${errors.condition ? 'is-invalid' : ''}`}
-                    defaultValue={stuff.condition}
                   >
                     <option value="excellent">Excellent</option>
                     <option value="good">Good</option>
@@ -73,7 +74,21 @@ const EditStuffForm = ({ stuff }: { stuff: Stuff }) => {
                   </select>
                   <div className="invalid-feedback">{errors.condition?.message}</div>
                 </Form.Group>
-                <input type="hidden" {...register('owner')} value={stuff.owner} />
+
+                <Form.Group>
+                  <Form.Label>Category</Form.Label>
+                  <select
+                    {...register('category')}
+                    className={`form-control ${errors.category ? 'is-invalid' : ''}`}
+                  >
+                    <option value="Food">Food</option>
+                    <option value="Sporting_Goods">Sporting Goods</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <div className="invalid-feedback">{errors.category?.message}</div>
+                </Form.Group>
+
                 <Form.Group className="form-group">
                   <Row className="pt-3">
                     <Col>
@@ -82,7 +97,12 @@ const EditStuffForm = ({ stuff }: { stuff: Stuff }) => {
                       </Button>
                     </Col>
                     <Col>
-                      <Button type="button" onClick={() => reset()} variant="warning" className="float-right">
+                      <Button
+                        type="button"
+                        onClick={() => reset(stuff)}
+                        variant="warning"
+                        className="float-right"
+                      >
                         Reset
                       </Button>
                     </Col>

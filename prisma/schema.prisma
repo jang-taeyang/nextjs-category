@@ -10,23 +10,13 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // for local development
   url      = env("DATABASE_URL")
-  // for Vercel
-  // url       = env("POSTGRES_PRISMA_URL")
-  // directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
+// Existing enums
 enum Role {
   USER
   ADMIN
-}
-
-model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  role     Role   @default(USER)
 }
 
 enum Condition {
@@ -36,10 +26,28 @@ enum Condition {
   poor
 }
 
+// ✅ New Category enum
+enum Category {
+  Food
+  Sporting_Goods
+  Electronics
+  Other
+}
+
+// Existing User model
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+}
+
+// ✅ Updated Stuff model
 model Stuff {
   id        Int       @id @default(autoincrement())
   name      String
   quantity  Int
   condition Condition
   owner     String
+  category  Category  @default(Other) // ← new field
 }
